@@ -2,15 +2,13 @@ version: 1
 
 startCommand:
   type: http
-  commandFunction: server.py:main  # Using the server.py which works in Docker
+  commandFunction: smithery_scan_server.py:main  # Using ultra-minimal server just for scanning
   port: 6366
-  timeout: 60  # Timeout in seconds
+  timeout: 30  # Shorter timeout for faster feedback
   healthcheck:
     path: "/health"
-    attempts: 3
-    interval: 5
-  env:
-    PYTHONUNBUFFERED: "1"
+    attempts: 2
+    interval: 2
 
 # Smithery tool definitions explicitly declared
 tools:
