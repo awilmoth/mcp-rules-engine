@@ -67,14 +67,68 @@ async def root():
 @app.get("/mcp-tools")
 async def get_tools():
     """Lazy-loaded tools endpoint."""
+    logger.info("Tools list requested at /mcp-tools")
     return {"tools": DEFAULT_TOOLS}
 
 @app.get("/mcp")
 @app.post("/mcp")
 async def mcp_endpoint(request: Request):
     """MCP endpoint that forwards to the actual MCP server."""
-    # Lazy load - we're just returning the tools list without requiring configuration
-    return {"jsonrpc": "2.0", "id": None, "result": {"methods": DEFAULT_TOOLS}}
+    try:
+        # Get request data
+        if request.method == "POST":
+            data = await request.json()
+            logger.info(f"MCP request received: {data.get('method', 'unknown_method')}")
+
+            # Check if it's a tool discovery request
+            if data.get("method") == "rpc.discover" or data.get("method") == "tools/list":
+                logger.info("Tool discovery request received, sending tool list")
+                return {
+                    "jsonrpc": "2.0",
+                    "id": data.get("id"),
+                    "result": {"methods": DEFAULT_TOOLS}
+                }
+
+            # For actual tool calls, forward to the MCP implementation
+            # In this lazy-loading version, we just handle 'redact_text' directly
+            if data.get("method") == "execute" or data.get("method") == "tools/call":
+                tool_name = data.get("params", {}).get("name", "")
+                parameters = data.get("params", {}).get("parameters", {})
+
+                if tool_name == "redact_text":
+                    # Simple implementation for lazy loading
+                    text = parameters.get("text", "")
+                    import re
+                    # Basic SSN redaction as an example
+                    redacted = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "<SSN>", text)
+                    # Basic email redaction
+                    redacted = re.sub(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "<EMAIL>", redacted)
+                    # Credit card redaction
+                    redacted = re.sub(r"\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b", "<CREDIT_CARD>", redacted)
+
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": data.get("id"),
+                        "result": {
+                            "redacted_text": redacted,
+                            "matches": [{"original": m, "replacement": "<REDACTED>", "rule_name": "Rule"}
+                                       for m in re.findall(r"\b\d{3}-\d{2}-\d{4}\b", text)]
+                        }
+                    }
+
+        # GET requests or unhandled methods just return the tool list
+        return {"jsonrpc": "2.0", "id": None, "result": {"methods": DEFAULT_TOOLS}}
+
+    except Exception as e:
+        logger.error(f"Error handling MCP request: {str(e)}")
+        return {
+            "jsonrpc": "2.0",
+            "id": None if "data" not in locals() else data.get("id"),
+            "error": {
+                "code": -32603,
+                "message": f"Internal server error: {str(e)}"
+            }
+        }
 
 def start_mcp_server():
     """Start the actual MCP server in the background."""

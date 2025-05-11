@@ -4,3 +4,23 @@ startCommand:
   type: http
   commandFunction: server.py:main
   port: 6366
+
+tools:
+  - name: redact_text
+    description: "Redacts sensitive information from text based on configured patterns."
+    parameters:
+      text:
+        type: string
+        description: "The text to redact"
+
+  - name: process_text
+    description: "Processes text through rules engine with options for rule sets."
+    parameters:
+      text:
+        type: string
+        description: "The text to process"
+      rule_sets:
+        type: array
+        description: "Optional IDs of rule sets to apply"
+        items:
+          type: string
