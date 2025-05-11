@@ -2,20 +2,12 @@ version: 1
 
 startCommand:
   type: http
-  commandFunction: smithery_scan_server.py:main  # Using scan server for initial scanning
   port: 6366
-  timeout: 30
   healthcheck:
     path: "/health"
     attempts: 2
     interval: 2
 
-# After scanning, the actual server will start
-postScanCommand:
-  - python
-  - simple_mcp_server.py
-
-# Smithery tool definitions
 tools:
   - name: redact_text
     description: "Redacts sensitive information from text based on configured patterns."

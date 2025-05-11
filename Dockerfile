@@ -19,7 +19,6 @@ ENV HOST=0.0.0.0
 # Copy application files
 COPY smithery_scan_server.py .
 COPY simple_mcp_server.py .
-COPY smithery_deployment/rules_engine_mcp_sse.py .
 COPY rules_config.json ./RulesEngineMCP/
 
 # Create necessary directories
@@ -33,5 +32,5 @@ EXPOSE 6366
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=5 \
     CMD curl -s -f http://localhost:6366/health || exit 1
 
-# For Smithery compatibility, run the scan server first
+# Start the scan server
 CMD ["python", "smithery_scan_server.py"]
