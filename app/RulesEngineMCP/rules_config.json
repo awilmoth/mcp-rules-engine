@@ -64,6 +64,19 @@
       "priority": 60,
       "created_at": "2025-05-10T00:00:00.000000",
       "updated_at": "2025-05-10T00:00:00.000000"
+    },
+    "e4fc2276-0f12-4963-be8d-b00a0c28c9f6": {
+      "id": "e4fc2276-0f12-4963-be8d-b00a0c28c9f6",
+      "name": "IP Address",
+      "description": "Updated IPv4 Address Pattern",
+      "condition": "\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b",
+      "action": "redact",
+      "replacement": "<IP_ADDRESS>",
+      "parameters": {},
+      "enabled": true,
+      "priority": 75,
+      "created_at": "2025-05-11T11:49:04.167401",
+      "updated_at": "2025-05-11T11:49:24.624143"
     }
   },
   "rule_sets": {
@@ -76,11 +89,12 @@
         "cc",
         "email",
         "phone",
-        "credentials"
+        "credentials",
+        "e4fc2276-0f12-4963-be8d-b00a0c28c9f6"
       ],
       "enabled": true,
       "created_at": "2025-05-10T00:00:00.000000",
-      "updated_at": "2025-05-10T00:00:00.000000"
+      "updated_at": "2025-05-11T11:49:04.167441"
     }
   },
   "default_rule_set": "default"

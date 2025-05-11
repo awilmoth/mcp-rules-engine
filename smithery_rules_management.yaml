@@ -1,0 +1,86 @@
+name: "rules-engine-mcp"
+version: "1.0.0"
+description: "MCP Rules Engine with management interface"
+
+provider: "@awilmoth/mcp-rules-engine"
+key: "b0074679-8be8-4622-9faf-ebee3f46a830"
+
+transport: "http"
+protocol: "execute"
+
+# App definition
+app:
+  type: "python"
+  main: "rules_management_server.py"
+  requirements:
+    - "fastapi>=0.68.0,<0.69.0"
+    - "uvicorn>=0.15.0,<0.16.0"
+    - "pydantic>=1.8.0,<2.0.0"
+    - "python-multipart>=0.0.5,<0.1.0"
+    - "mcp>=0.1.0"
+
+# Services
+services:
+  - name: "rules-management"
+    port: 7890
+    endpoint: "/"
+    public: true
+
+  - name: "mcp-rules-engine"
+    port: 6366
+    endpoint: "/mcp"
+    public: false  # Only accessible through MCP
+
+# Environment variables
+env:
+  PYTHONPATH: "."
+
+# Exposed tools
+tools:
+  - name: "redact_text"
+    description: "Redacts sensitive information from text based on configured patterns."
+    parameters:
+      text:
+        type: "string"
+        description: "The text to redact"
+
+  - name: "process_text"
+    description: "Processes text through rules engine with options for rule sets."
+    parameters:
+      text:
+        type: "string"
+        description: "The text to process"
+      rule_sets:
+        type: "array"
+        description: "Optional IDs of rule sets to apply"
+        items:
+          type: "string"
+
+# Files to include
+include:
+  - "rules_management_server.py"
+  - "rules_management.html"
+  - "app/RulesEngineMCP/rules_config.json"
+  - "app/rules_engine_mcp_sse.py"
+
+# Documentation
+docs:
+  description: |
+    # MCP Rules Engine with Management Interface
+    
+    This service provides a rules engine that can redact sensitive information 
+    from text using configurable regex patterns. It exposes both a web management
+    interface for managing rules and an MCP endpoint for Claude Code integration.
+    
+    ## Features
+    
+    - Web UI for rule management
+    - MCP integration for Claude Code
+    - Redaction and processing of sensitive information
+    - Configurable regex patterns
+    
+    ## Usage
+    
+    1. Access the web UI at /
+    2. Use the MCP endpoint through Claude Code
+    3. Test rules directly in the web UI

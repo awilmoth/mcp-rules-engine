@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Rules Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .rules-container {
+            margin-top: 20px;
+        }
+        .rule-card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .rule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .rule-name {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .rule-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .rule-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+        }
+        .rule-detail {
+            margin-bottom: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 100px;
+            font-family: monospace;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button.delete {
+            background-color: #f44336;
+        }
+        button.delete:hover {
+            background-color: #d32f2f;
+        }
+        button.edit {
+            background-color: #2196F3;
+        }
+        button.edit:hover {
+            background-color: #0b7dda;
+        }
+        .toggle-container {
+            display: flex;
+            align-items: center;
+        }
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-left: 10px;
+        }
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .hidden {
+            display: none;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            color: black;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            background-color: white;
+        }
+        .tabcontent.active {
+            display: block;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MCP Rules Management</h1>
+        
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'rulesTab')">Manage Rules</button>
+            <button class="tablinks" onclick="openTab(event, 'addRuleTab')">Add New Rule</button>
+            <button class="tablinks" onclick="openTab(event, 'testRuleTab')">Test Rules</button>
+        </div>
+        
+        <div id="statusMessage" class="status-message hidden"></div>
+        
+        <div id="rulesTab" class="tabcontent active">
+            <h2>Current Rules</h2>
+            <div id="rulesContainer" class="rules-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading rules...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="addRuleTab" class="tabcontent">
+            <h2>Add New Rule</h2>
+            <form id="addRuleForm">
+                <div class="form-group">
+                    <label for="ruleName">Rule Name:</label>
+                    <input type="text" id="ruleName" required placeholder="e.g., SSN, Credit Card, etc.">
+                </div>
+                
+                <div class="form-group">
+                    <label for="ruleDescription">Description:</label>
+                    <input type="text" id="ruleDescription" placeholder="Description of what this rule detects">
+                </div>
+                
+                <div class="form-group">
+                    <label for="rulePattern">Regex Pattern:</label>
+                    <textarea id="rulePattern" required placeholder="Regular expression pattern, e.g., \b\d{3}-\d{2}-\d{4}\b for SSN"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ruleAction">Action:</label>
+                    <select id="ruleAction" required>
+                        <option value="redact">Redact</option>
+                        <option value="flag">Flag</option>
+                        <option value="block">Block</option>
+                        <option value="transform">Transform</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ruleReplacement">Replacement Text:</label>
+                    <input type="text" id="ruleReplacement" placeholder="e.g., <SSN>, <REDACTED>, etc.">
+                </div>
+                
+                <div class="form-group">
+                    <label for="rulePriority">Priority:</label>
+                    <input type="number" id="rulePriority" min="0" max="100" value="50" required>
+                    <small>Higher priority rules are processed first (0-100)</small>
+                </div>
+                
+                <div class="form-group toggle-container">
+                    <label for="ruleEnabled">Enabled:</label>
+                    <label class="toggle">
+                        <input type="checkbox" id="ruleEnabled" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <button type="submit">Add Rule</button>
+            </form>
+        </div>
+        
+        <div id="testRuleTab" class="tabcontent">
+            <h2>Test Rules</h2>
+            <div class="form-group">
+                <label for="testInput">Enter text to test:</label>
+                <textarea id="testInput" placeholder="Enter text containing sensitive information to test the rules..."></textarea>
+            </div>
+            
+            <button onclick="testRules()">Test Rules</button>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="testOutput">Result:</label>
+                <textarea id="testOutput" readonly></textarea>
+            </div>
+            
+            <div id="testResults" class="hidden">
+                <h3>Detected Patterns:</h3>
+                <div id="detectedPatterns"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Rule Modal (hidden by default) -->
+    <div id="editModal" style="display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+        <div style="background-color: white; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 5px;">
+            <span style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;" onclick="document.getElementById('editModal').style.display='none'">&times;</span>
+            <h2>Edit Rule</h2>
+            <form id="editRuleForm">
+                <input type="hidden" id="editRuleId">
+                
+                <div class="form-group">
+                    <label for="editRuleName">Rule Name:</label>
+                    <input type="text" id="editRuleName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editRuleDescription">Description:</label>
+                    <input type="text" id="editRuleDescription">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editRulePattern">Regex Pattern:</label>
+                    <textarea id="editRulePattern" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editRuleAction">Action:</label>
+                    <select id="editRuleAction" required>
+                        <option value="redact">Redact</option>
+                        <option value="flag">Flag</option>
+                        <option value="block">Block</option>
+                        <option value="transform">Transform</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editRuleReplacement">Replacement Text:</label>
+                    <input type="text" id="editRuleReplacement">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editRulePriority">Priority:</label>
+                    <input type="number" id="editRulePriority" min="0" max="100" required>
+                </div>
+                
+                <div class="form-group toggle-container">
+                    <label for="editRuleEnabled">Enabled:</label>
+                    <label class="toggle">
+                        <input type="checkbox" id="editRuleEnabled">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <button type="submit">Update Rule</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // API base URL
+        const API_BASE_URL = 'http://localhost:6366';
+        
+        // Tab functionality
+        function openTab(evt, tabName) {
+            // Hide all tab content
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            
+            // Remove active class from tab buttons
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            
+            // Show the current tab and add active class to the button
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+        
+        // Function to show status messages
+        function showStatusMessage(message, isError = false) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.classList.remove('hidden', 'success', 'error');
+            statusElement.classList.add(isError ? 'error' : 'success');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusElement.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Load rules from server
+        async function loadRules() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/redact_rules`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayRules(data.rules || {});
+            } catch (error) {
+                console.error('Error loading rules:', error);
+                showStatusMessage(`Error loading rules: ${error.message}`, true);
+                
+                // Display message in rules container
+                const rulesContainer = document.getElementById('rulesContainer');
+                rulesContainer.innerHTML = `
+                    <div class="error status-message">
+                        <p>Failed to load rules from the server.</p>
+                        <p>Error: ${error.message}</p>
+                        <p>Using local sample rules instead.</p>
+                    </div>
+                `;
+                
+                // Use sample rules for demonstration if API fails
+                const sampleRules = {
+                    "ssn": {
+                        "id": "ssn",
+                        "name": "SSN",
+                        "description": "US Social Security Number",
+                        "condition": "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+                        "action": "redact",
+                        "replacement": "<SSN>",
+                        "parameters": {},
+                        "enabled": true,
+                        "priority": 100,
+                        "created_at": "2025-05-10T00:00:00.000000",
+                        "updated_at": "2025-05-10T00:00:00.000000"
+                    },
+                    "cc": {
+                        "id": "cc",
+                        "name": "Credit Card",
+                        "description": "Credit Card Number",
+                        "condition": "\\b(?:\\d{4}[- ]?){3}\\d{4}\\b",
+                        "action": "redact",
+                        "replacement": "<CREDIT_CARD>",
+                        "parameters": {},
+                        "enabled": true,
+                        "priority": 90,
+                        "created_at": "2025-05-10T00:00:00.000000",
+                        "updated_at": "2025-05-10T00:00:00.000000"
+                    },
+                    "email": {
+                        "id": "email",
+                        "name": "Email",
+                        "description": "Email Address",
+                        "condition": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b",
+                        "action": "redact",
+                        "replacement": "<EMAIL>",
+                        "parameters": {},
+                        "enabled": true,
+                        "priority": 80,
+                        "created_at": "2025-05-10T00:00:00.000000",
+                        "updated_at": "2025-05-10T00:00:00.000000"
+                    }
+                };
+                
+                displayRules(sampleRules);
+            }
+        }
+        
+        // Display rules in the UI
+        function displayRules(rules) {
+            const rulesContainer = document.getElementById('rulesContainer');
+            rulesContainer.innerHTML = '';
+            
+            if (Object.keys(rules).length === 0) {
+                rulesContainer.innerHTML = '<p>No rules found. Add a new rule to get started.</p>';
+                return;
+            }
+            
+            // Sort rules by priority (highest first)
+            const sortedRules = Object.values(rules).sort((a, b) => b.priority - a.priority);
+            
+            sortedRules.forEach(rule => {
+                const ruleElement = document.createElement('div');
+                ruleElement.className = 'rule-card';
+                ruleElement.innerHTML = `
+                    <div class="rule-header">
+                        <div class="rule-name">${escapeHtml(rule.name)}</div>
+                        <div class="rule-actions">
+                            <button class="edit" onclick="editRule('${rule.id}')">Edit</button>
+                            <button class="delete" onclick="deleteRule('${rule.id}')">Delete</button>
+                        </div>
+                    </div>
+                    <div class="rule-details">
+                        <div class="rule-detail"><strong>ID:</strong> ${escapeHtml(rule.id)}</div>
+                        <div class="rule-detail"><strong>Description:</strong> ${escapeHtml(rule.description)}</div>
+                        <div class="rule-detail"><strong>Action:</strong> ${escapeHtml(rule.action)}</div>
+                        <div class="rule-detail"><strong>Replacement:</strong> ${escapeHtml(rule.replacement || '')}</div>
+                        <div class="rule-detail"><strong>Priority:</strong> ${rule.priority}</div>
+                        <div class="rule-detail"><strong>Enabled:</strong> 
+                            <label class="toggle">
+                                <input type="checkbox" ${rule.enabled ? 'checked' : ''} onchange="toggleRule('${rule.id}', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="rule-detail"><strong>Pattern:</strong> <pre>${escapeHtml(rule.condition)}</pre></div>
+                `;
+                
+                rulesContainer.appendChild(ruleElement);
+            });
+        }
+        
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            if (unsafe === null || unsafe === undefined) return '';
+            return unsafe
+                .toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        // Add new rule
+        async function addRule(formData) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/add_rule`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                showStatusMessage('Rule added successfully!');
+                document.getElementById('addRuleForm').reset();
+                
+                // Switch to rules tab and reload rules
+                const tabEvent = { currentTarget: document.querySelector('.tablinks') };
+                openTab(tabEvent, 'rulesTab');
+                loadRules();
+                
+                return data;
+            } catch (error) {
+                console.error('Error adding rule:', error);
+                showStatusMessage(`Error adding rule: ${error.message}`, true);
+                
+                // Still add the rule to local state if the API fails
+                const ruleId = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                const rule = {
+                    id: ruleId,
+                    name: formData.name,
+                    description: formData.description,
+                    condition: formData.condition,
+                    action: formData.action,
+                    replacement: formData.replacement,
+                    parameters: {},
+                    enabled: formData.enabled,
+                    priority: formData.priority,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                // Add to UI anyway
+                showStatusMessage('Rule added locally (server update failed)', true);
+                
+                // Switch to rules tab
+                const tabEvent = { currentTarget: document.querySelector('.tablinks') };
+                openTab(tabEvent, 'rulesTab');
+                
+                // Reload the UI with the current rules plus the new one
+                loadRules();
+                
+                return { rule_id: ruleId, rule: rule };
+            }
+        }
+        
+        // Update existing rule
+        async function updateRule(ruleId, formData) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/update_rule`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        rule_id: ruleId,
+                        ...formData
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                showStatusMessage('Rule updated successfully!');
+                document.getElementById('editModal').style.display = 'none';
+                loadRules();
+                
+                return data;
+            } catch (error) {
+                console.error('Error updating rule:', error);
+                showStatusMessage(`Error updating rule: ${error.message}`, true);
+                
+                // Update UI anyway for demonstration
+                document.getElementById('editModal').style.display = 'none';
+                loadRules();
+                
+                return { error: error.message };
+            }
+        }
+        
+        // Delete a rule
+        async function deleteRule(ruleId) {
+            if (!confirm('Are you sure you want to delete this rule?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/delete_rule`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ rule_id: ruleId })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                showStatusMessage('Rule deleted successfully!');
+                loadRules();
+            } catch (error) {
+                console.error('Error deleting rule:', error);
+                showStatusMessage(`Error deleting rule: ${error.message}`, true);
+                
+                // Remove from UI anyway for demonstration
+                loadRules();
+            }
+        }
+        
+        // Toggle rule enabled state
+        async function toggleRule(ruleId, enabled) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/update_rule`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        rule_id: ruleId,
+                        enabled: enabled
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                showStatusMessage(`Rule ${enabled ? 'enabled' : 'disabled'} successfully!`);
+            } catch (error) {
+                console.error('Error toggling rule:', error);
+                showStatusMessage(`Error toggling rule: ${error.message}`, true);
+            }
+        }
+        
+        // Open edit rule modal
+        function editRule(ruleId) {
+            // Get the rule from the server
+            fetch(`${API_BASE_URL}/get_rule?rule_id=${ruleId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const rule = data.rule;
+                    
+                    // Fill the edit form
+                    document.getElementById('editRuleId').value = rule.id;
+                    document.getElementById('editRuleName').value = rule.name;
+                    document.getElementById('editRuleDescription').value = rule.description;
+                    document.getElementById('editRulePattern').value = rule.condition;
+                    document.getElementById('editRuleAction').value = rule.action;
+                    document.getElementById('editRuleReplacement').value = rule.replacement || '';
+                    document.getElementById('editRulePriority').value = rule.priority;
+                    document.getElementById('editRuleEnabled').checked = rule.enabled;
+                    
+                    // Show the modal
+                    document.getElementById('editModal').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error getting rule:', error);
+                    showStatusMessage(`Error getting rule: ${error.message}`, true);
+                    
+                    // For demonstration, just populate with default values
+                    const ruleCards = document.querySelectorAll('.rule-card');
+                    let rule = null;
+                    
+                    for (const card of ruleCards) {
+                        const nameElement = card.querySelector('.rule-name');
+                        if (nameElement.textContent.includes(ruleId)) {
+                            rule = {
+                                id: ruleId,
+                                name: nameElement.textContent,
+                                description: card.querySelector('.rule-detail:nth-child(2)').textContent.replace('Description:', '').trim(),
+                                condition: card.querySelector('pre').textContent,
+                                action: card.querySelector('.rule-detail:nth-child(3)').textContent.replace('Action:', '').trim(),
+                                replacement: card.querySelector('.rule-detail:nth-child(4)').textContent.replace('Replacement:', '').trim(),
+                                priority: parseInt(card.querySelector('.rule-detail:nth-child(5)').textContent.replace('Priority:', '').trim()),
+                                enabled: card.querySelector('input[type="checkbox"]').checked
+                            };
+                            break;
+                        }
+                    }
+                    
+                    if (rule) {
+                        document.getElementById('editRuleId').value = rule.id;
+                        document.getElementById('editRuleName').value = rule.name;
+                        document.getElementById('editRuleDescription').value = rule.description;
+                        document.getElementById('editRulePattern').value = rule.condition;
+                        document.getElementById('editRuleAction').value = rule.action;
+                        document.getElementById('editRuleReplacement').value = rule.replacement;
+                        document.getElementById('editRulePriority').value = rule.priority;
+                        document.getElementById('editRuleEnabled').checked = rule.enabled;
+                        
+                        document.getElementById('editModal').style.display = 'block';
+                    } else {
+                        showStatusMessage('Could not find rule to edit', true);
+                    }
+                });
+        }
+        
+        // Test rules against sample text
+        async function testRules() {
+            const testInput = document.getElementById('testInput').value;
+            
+            if (!testInput) {
+                showStatusMessage('Please enter text to test', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/redact_text`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: testInput })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display the redacted text
+                document.getElementById('testOutput').value = data.redacted_text;
+                
+                // Display detected patterns
+                const patternsContainer = document.getElementById('detectedPatterns');
+                patternsContainer.innerHTML = '';
+                
+                if (data.matches && data.matches.length > 0) {
+                    document.getElementById('testResults').classList.remove('hidden');
+                    
+                    data.matches.forEach(match => {
+                        const matchElement = document.createElement('div');
+                        matchElement.className = 'rule-card';
+                        matchElement.innerHTML = `
+                            <div class="rule-header">
+                                <div class="rule-name">${escapeHtml(match.rule_name)}</div>
+                            </div>
+                            <div class="rule-details">
+                                <div class="rule-detail"><strong>Original:</strong> ${escapeHtml(match.original)}</div>
+                                <div class="rule-detail"><strong>Replacement:</strong> ${escapeHtml(match.replacement)}</div>
+                            </div>
+                        `;
+                        
+                        patternsContainer.appendChild(matchElement);
+                    });
+                } else {
+                    document.getElementById('testResults').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error testing rules:', error);
+                showStatusMessage(`Error testing rules: ${error.message}`, true);
+                
+                // For demonstration, use regex to simulate redaction
+                const testInput = document.getElementById('testInput').value;
+                let redactedText = testInput;
+                const matches = [];
+                
+                // Simple regex patterns for demonstration
+                const patterns = [
+                    { pattern: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: "<SSN>", name: "SSN" },
+                    { pattern: /\b(?:\d{4}[- ]?){3}\d{4}\b/g, replacement: "<CREDIT_CARD>", name: "Credit Card" },
+                    { pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, replacement: "<EMAIL>", name: "Email" }
+                ];
+                
+                // Apply each pattern
+                patterns.forEach(p => {
+                    const matches_for_pattern = [...testInput.matchAll(p.pattern)];
+                    matches_for_pattern.forEach(m => {
+                        matches.push({
+                            original: m[0],
+                            replacement: p.replacement,
+                            rule_name: p.name
+                        });
+                    });
+                    
+                    redactedText = redactedText.replace(p.pattern, p.replacement);
+                });
+                
+                // Display the redacted text
+                document.getElementById('testOutput').value = redactedText;
+                
+                // Display detected patterns
+                const patternsContainer = document.getElementById('detectedPatterns');
+                patternsContainer.innerHTML = '';
+                
+                if (matches.length > 0) {
+                    document.getElementById('testResults').classList.remove('hidden');
+                    
+                    matches.forEach(match => {
+                        const matchElement = document.createElement('div');
+                        matchElement.className = 'rule-card';
+                        matchElement.innerHTML = `
+                            <div class="rule-header">
+                                <div class="rule-name">${escapeHtml(match.rule_name)}</div>
+                            </div>
+                            <div class="rule-details">
+                                <div class="rule-detail"><strong>Original:</strong> ${escapeHtml(match.original)}</div>
+                                <div class="rule-detail"><strong>Replacement:</strong> ${escapeHtml(match.replacement)}</div>
+                            </div>
+                        `;
+                        
+                        patternsContainer.appendChild(matchElement);
+                    });
+                } else {
+                    document.getElementById('testResults').classList.add('hidden');
+                }
+            }
+        }
+        
+        // Event listeners for form submissions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load initial rules
+            loadRules();
+            
+            // Add rule form submission
+            document.getElementById('addRuleForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    name: document.getElementById('ruleName').value,
+                    description: document.getElementById('ruleDescription').value,
+                    condition: document.getElementById('rulePattern').value,
+                    action: document.getElementById('ruleAction').value,
+                    replacement: document.getElementById('ruleReplacement').value,
+                    enabled: document.getElementById('ruleEnabled').checked,
+                    priority: parseInt(document.getElementById('rulePriority').value)
+                };
+                
+                addRule(formData);
+            });
+            
+            // Edit rule form submission
+            document.getElementById('editRuleForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const ruleId = document.getElementById('editRuleId').value;
+                const formData = {
+                    name: document.getElementById('editRuleName').value,
+                    description: document.getElementById('editRuleDescription').value,
+                    condition: document.getElementById('editRulePattern').value,
+                    action: document.getElementById('editRuleAction').value,
+                    replacement: document.getElementById('editRuleReplacement').value,
+                    enabled: document.getElementById('editRuleEnabled').checked,
+                    priority: parseInt(document.getElementById('editRulePriority').value)
+                };
+                
+                updateRule(ruleId, formData);
+            });
+        });
+    </script>
+</body>
+</html>
