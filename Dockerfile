@@ -6,33 +6,27 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     net-tools \
-    tcpdump \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies
+# Copy minimal server and dependencies
+COPY minimal_server.py .
 COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Create logs directory
+RUN mkdir -p logs
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV PORT=6366
-ENV HOST=0.0.0.0
 
-# Copy application files
-COPY smithery_scan_server.py .
-COPY simple_mcp_server.py .
-COPY rules_config.json ./RulesEngineMCP/
-
-# Create necessary directories
-RUN mkdir -p logs
-RUN mkdir -p RulesEngineMCP
-
-# Expose the MCP port
+# Expose the port
 EXPOSE 6366
 
-# Health check to ensure the service is responding
-HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=5 \
+# Health check
+HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -s -f http://localhost:6366/health || exit 1
 
-# Start the scan server
-CMD ["python", "smithery_scan_server.py"]
+# Start the minimal server
+CMD ["python", "-u", "minimal_server.py"]
