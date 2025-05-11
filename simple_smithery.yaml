@@ -1,0 +1,6 @@
+version: 1
+
+startCommand:
+  type: http
+  commandFunction: server.py:main
+  port: 6366
