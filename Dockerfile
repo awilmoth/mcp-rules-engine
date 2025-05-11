@@ -9,26 +9,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
+# Use pip cache for faster rebuilds
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY app/ app/
-COPY smithery.json .
-COPY server.py .
-
-# Copy config and rules
-COPY app/RulesEngineMCP/ app/RulesEngineMCP/
-
-# Copy test scripts
-COPY test_redaction.py .
-COPY test_mcp.py .
-
-# Create log directory
-RUN mkdir -p logs
-
-# Set environment variables
+# Set environment variables early for better caching
 ENV PYTHONUNBUFFERED=1
 ENV PORT=6366
+
+# Copy core server logic first (changes less frequently)
+COPY server.py .
+COPY smithery.json .
+
+# Copy minimal application code needed for Smithery deployments
+COPY app/rules_engine_mcp_sse.py app/
+COPY app/RulesEngineMCP/rules_config.json app/RulesEngineMCP/
+
+# Create log directory
+RUN mkdir -p logs app/RulesEngineMCP/logs
 
 # Expose port
 EXPOSE 6366
