@@ -75,55 +75,203 @@ async def get_tools():
 async def mcp_endpoint(request: Request):
     """MCP endpoint that forwards to the actual MCP server."""
     try:
-        # Get request data
+        # First, handle GET requests - they always return the tool list for Smithery tool scanning
+        if request.method == "GET":
+            logger.info("GET request to /mcp - returning tool list for Smithery")
+            return {
+                "jsonrpc": "2.0", 
+                "id": 1, 
+                "result": {"methods": DEFAULT_TOOLS}
+            }
+            
+        # For POST requests, parse the JSON data
         if request.method == "POST":
-            data = await request.json()
+            try:
+                data = await request.json()
+            except Exception as json_error:
+                logger.error(f"Error parsing JSON request: {str(json_error)}")
+                return {
+                    "jsonrpc": "2.0",
+                    "id": None,
+                    "error": {
+                        "code": -32700,
+                        "message": "Parse error: Invalid JSON"
+                    }
+                }
+            
             logger.info(f"MCP request received: {data.get('method', 'unknown_method')}")
-
-            # Check if it's a tool discovery request
+            request_id = data.get("id", 1)  # Default ID if none provided
+            
+            # Always support tool discovery requests without authentication
+            # This is crucial for Smithery scanning
             if data.get("method") == "rpc.discover" or data.get("method") == "tools/list":
                 logger.info("Tool discovery request received, sending tool list")
                 return {
-                    "jsonrpc": "2.0",
-                    "id": data.get("id"),
+                    "jsonrpc": "2.0", 
+                    "id": request_id, 
                     "result": {"methods": DEFAULT_TOOLS}
                 }
-
-            # For actual tool calls, forward to the MCP implementation
-            # In this lazy-loading version, we just handle 'redact_text' directly
+                
+            # For actual tool calls, implement lazy loading
             if data.get("method") == "execute" or data.get("method") == "tools/call":
-                tool_name = data.get("params", {}).get("name", "")
-                parameters = data.get("params", {}).get("parameters", {})
-
+                # Parse parameters
+                tool_name = ""
+                parameters = {}
+                
+                if data.get("method") == "execute":
+                    params = data.get("params", {})
+                    tool_name = params.get("name", "")
+                    parameters = params.get("parameters", {})
+                else:  # tools/call
+                    tool_name = data.get("params", {}).get("name", "")
+                    parameters = data.get("params", {}).get("parameters", {})
+                
+                # Implement redact_text tool directly
                 if tool_name == "redact_text":
-                    # Simple implementation for lazy loading
                     text = parameters.get("text", "")
+                    if not text:
+                        return {
+                            "jsonrpc": "2.0",
+                            "id": request_id,
+                            "error": {
+                                "code": -32602,
+                                "message": "Invalid params: text parameter is required"
+                            }
+                        }
+                    
                     import re
-                    # Basic SSN redaction as an example
-                    redacted = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "<SSN>", text)
-                    # Basic email redaction
-                    redacted = re.sub(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", "<EMAIL>", redacted)
+                    # Basic redaction implementation
+                    redacted = text
+                    matches = []
+                    
+                    # SSN redaction
+                    ssn_matches = re.findall(r"\b\d{3}-\d{2}-\d{4}\b", text)
+                    for match in ssn_matches:
+                        matches.append({
+                            "original": match,
+                            "replacement": "<SSN>",
+                            "rule_name": "SSN"
+                        })
+                    redacted = re.sub(r"\b\d{3}-\d{2}-\d{4}\b", "<SSN>", redacted)
+                    
+                    # Email redaction
+                    email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+                    email_matches = re.findall(email_pattern, redacted)
+                    for match in email_matches:
+                        matches.append({
+                            "original": match,
+                            "replacement": "<EMAIL>",
+                            "rule_name": "Email"
+                        })
+                    redacted = re.sub(email_pattern, "<EMAIL>", redacted)
+                    
                     # Credit card redaction
-                    redacted = re.sub(r"\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b", "<CREDIT_CARD>", redacted)
-
+                    cc_pattern = r"\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b"
+                    cc_matches = re.findall(cc_pattern, redacted)
+                    for match in cc_matches:
+                        matches.append({
+                            "original": match,
+                            "replacement": "<CREDIT_CARD>",
+                            "rule_name": "CreditCard"
+                        })
+                    redacted = re.sub(cc_pattern, "<CREDIT_CARD>", redacted)
+                    
                     return {
                         "jsonrpc": "2.0",
-                        "id": data.get("id"),
+                        "id": request_id,
                         "result": {
                             "redacted_text": redacted,
-                            "matches": [{"original": m, "replacement": "<REDACTED>", "rule_name": "Rule"}
-                                       for m in re.findall(r"\b\d{3}-\d{2}-\d{4}\b", text)]
+                            "matches": matches
                         }
                     }
-
-        # GET requests or unhandled methods just return the tool list
-        return {"jsonrpc": "2.0", "id": None, "result": {"methods": DEFAULT_TOOLS}}
-
+                
+                # Implement process_text tool directly
+                elif tool_name == "process_text":
+                    text = parameters.get("text", "")
+                    if not text:
+                        return {
+                            "jsonrpc": "2.0",
+                            "id": request_id,
+                            "error": {
+                                "code": -32602,
+                                "message": "Invalid params: text parameter is required"
+                            }
+                        }
+                    
+                    # Simple implementation that just forwards to redact_text
+                    import re
+                    redacted = text
+                    results = []
+                    
+                    # SSN redaction
+                    ssn_pattern = r"\b\d{3}-\d{2}-\d{4}\b"
+                    ssn_matches = re.findall(ssn_pattern, redacted)
+                    for match in ssn_matches:
+                        results.append({
+                            "rule_id": "ssn-rule",
+                            "rule_name": "SSN",
+                            "action": "redact",
+                            "original": match,
+                            "replacement": "<SSN>"
+                        })
+                    redacted = re.sub(ssn_pattern, "<SSN>", redacted)
+                    
+                    # Email redaction
+                    email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+                    email_matches = re.findall(email_pattern, redacted)
+                    for match in email_matches:
+                        results.append({
+                            "rule_id": "email-rule",
+                            "rule_name": "Email",
+                            "action": "redact",
+                            "original": match,
+                            "replacement": "<EMAIL>"
+                        })
+                    redacted = re.sub(email_pattern, "<EMAIL>", redacted)
+                    
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "result": {
+                            "processed_text": redacted,
+                            "results": results,
+                            "status": "success"
+                        }
+                    }
+                
+                # Unknown tool
+                else:
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "error": {
+                            "code": -32601,
+                            "message": f"Method not found: {tool_name}"
+                        }
+                    }
+            
+            # Unknown method
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32601,
+                    "message": f"Method not found: {data.get('method')}"
+                }
+            }
+        
+        # Fallback response for all other cases
+        return {
+            "jsonrpc": "2.0", 
+            "id": 1, 
+            "result": {"methods": DEFAULT_TOOLS}
+        }
+        
     except Exception as e:
         logger.error(f"Error handling MCP request: {str(e)}")
         return {
             "jsonrpc": "2.0",
-            "id": None if "data" not in locals() else data.get("id"),
+            "id": 1,  # Use default ID
             "error": {
                 "code": -32603,
                 "message": f"Internal server error: {str(e)}"
