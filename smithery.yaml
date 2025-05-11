@@ -1,37 +1,33 @@
 version: 1
 name: mcp-rules-engine
-description: "MCP Rules Engine for regex-based redaction of sensitive information"
+description: MCP Rules Engine for regex-based redaction of sensitive information
 
-# Start command configuration
-start:
-  command: ["python", "app/rules_engine_mcp_sse.py"]
+# Required start configuration
+startCommand: 
+  command: python app/rules_engine_mcp_sse.py
   port: 6366
 
-# MCP configuration
+# MCP configuration 
 transport: http
-service:
-  endpoint: "/mcp"
-  health_endpoint: "/health"
-  tools_endpoint: "/mcp-tools"
-
-# Tools definitions
+endpoint: /mcp
+health: /health
 tools:
   - name: redact_text
-    description: "Redacts sensitive information from text based on configured patterns."
+    description: Redacts sensitive information from text based on configured patterns.
     parameters:
       text:
         type: string
-        description: "The text to redact"
+        description: The text to redact
   
   - name: process_text
-    description: "Processes text through rules engine with options for rule sets."
+    description: Processes text through rules engine with options for rule sets.
     parameters:
       text:
         type: string
-        description: "The text to process"
+        description: The text to process
       rule_sets:
         type: array
-        description: "Optional IDs of rule sets to apply"
+        description: Optional IDs of rule sets to apply
         items:
           type: string
 
@@ -41,4 +37,4 @@ configSchema:
   properties:
     defaultRuleSet:
       type: string
-      description: "Default ruleset to use"
+      description: Default ruleset to use
