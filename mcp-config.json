@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "rules_engine": {
+      "url": "http://localhost:6366/sse",
+      "transport": "sse",
+      "timeout_ms": 60000,
+      "command": "/home/aaron/mcp-redacted/venv-linux/bin/python",
+      "args": [
+        "/home/aaron/mcp-redacted/app/rules_engine_mcp_sse.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/aaron/mcp-redacted"
+      },
+      "protocol_version": "execute",
+      "tools": [
+        {
+          "name": "redact_text",
+          "description": "Redacts sensitive information from text based on configured patterns.",
+          "parameters": {
+            "text": {
+              "type": "string",
+              "description": "The text to redact"
+            }
+          }
+        },
+        {
+          "name": "process_text",
+          "description": "Processes text through rules engine with options for rule sets.",
+          "parameters": {
+            "text": {
+              "type": "string",
+              "description": "The text to process"
+            },
+            "rule_sets": {
+              "type": "array",
+              "description": "Optional IDs of rule sets to apply",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "rules": {
+    "ssn": {
+      "id": "ssn",
+      "name": "SSN",
+      "description": "US Social Security Number",
+      "condition": "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+      "action": "redact",
+      "replacement": "<SSN>",
+      "parameters": {},
+      "enabled": true,
+      "priority": 100,
+      "created_at": "2025-05-10T00:00:00.000000",
+      "updated_at": "2025-05-10T00:00:00.000000"
+    },
+    "cc": {
+      "id": "cc",
+      "name": "Credit Card",
+      "description": "Credit Card Number",
+      "condition": "\\b(?:\\d{4}[- ]?){3}\\d{4}\\b",
+      "action": "redact",
+      "replacement": "<CREDIT_CARD>",
+      "parameters": {},
+      "enabled": true,
+      "priority": 90,
+      "created_at": "2025-05-10T00:00:00.000000",
+      "updated_at": "2025-05-10T00:00:00.000000"
+    },
+    "email": {
+      "id": "email",
+      "name": "Email",
+      "description": "Email Address",
+      "condition": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b",
+      "action": "redact",
+      "replacement": "<EMAIL>",
+      "parameters": {},
+      "enabled": true,
+      "priority": 80,
+      "created_at": "2025-05-10T00:00:00.000000",
+      "updated_at": "2025-05-10T00:00:00.000000"
+    },
+    "phone": {
+      "id": "phone",
+      "name": "Phone",
+      "description": "Phone Number",
+      "condition": "\\b(?:\\+\\d{1,2}\\s)?\\(?\\d{3}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}\\b",
+      "action": "redact",
+      "replacement": "<PHONE>",
+      "parameters": {},
+      "enabled": true,
+      "priority": 70,
+      "created_at": "2025-05-10T00:00:00.000000",
+      "updated_at": "2025-05-10T00:00:00.000000"
+    },
+    "credentials": {
+      "id": "credentials",
+      "name": "Credentials",
+      "description": "API Keys, Passwords, etc.",
+      "condition": "(?i)(password|api[_-]?key|access[_-]?token|secret)[=:]\\s*\\S+",
+      "action": "redact",
+      "replacement": "<CREDENTIAL>",
+      "parameters": {},
+      "enabled": true,
+      "priority": 60,
+      "created_at": "2025-05-10T00:00:00.000000",
+      "updated_at": "2025-05-10T00:00:00.000000"
+    }
+  },
+  "rule_sets": {
+    "default": {
+      "id": "default",
+      "name": "Default",
+      "description": "Default rule set with common patterns",
+      "rules": [
+        "ssn",
+        "cc",
+        "email",
+        "phone",
+        "credentials"
+      ],
+      "enabled": true,
+      "created_at": "2025-05-10T00:00:00.000000",
+      "updated_at": "2025-05-10T00:00:00.000000"
+    }
+  },
+  "default_rule_set": "default"
+}

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "rules_engine": {
+      "type": "http",
+      "url": "http://localhost:6366",
+      "headers": {}
+    }
+  }
+}

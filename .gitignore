@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+venv-linux/
+ENV/
+env/
+
+# Logs and local data
+*.log
+logs/
+temp/
+*.pid
+
+# Package builds
+*.zip
+smithery_deployment/
+
+# Local configuration
+.env
+temp_mcp_config.json
+temp_prompt.txt
+temp_message.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Backup and old files
+backup/
+
+# Smithery API keys and sensitive information
+smithery_config.json
