@@ -41,27 +41,55 @@ A flexible rules engine implementing the Model Context Protocol (MCP) to provide
 
 ### Using with Claude
 
-Use the provided scripts to integrate with Claude CLI:
+We provide multiple integration options for Claude:
+
+#### 1. Direct Redaction Pipeline
+
+Use the direct redaction script for the simplest integration:
 
 ```bash
-# Direct redaction and Claude integration
 ./use_direct_redaction.sh "My SSN is 123-45-6789 and my email is test@example.com"
-
-# Smithery integration (after configuration)
-./use_smithery.sh claude "My SSN is 123-45-6789 and my email is test@example.com"
 ```
+
+This will:
+1. Redact sensitive information
+2. Send the redacted text to Claude
+3. Display Claude's response
+
+#### 2. Smithery Integration
+
+For cloud-based integration with Smithery:
+
+```bash
+# Set up Smithery
+./smithery_setup.sh install YOUR_SMITHERY_API_KEY
+
+# Test redaction
+./smithery_setup.sh test "My SSN is 123-45-6789"
+```
+
+See [SMITHERY_SETUP.md](SMITHERY_SETUP.md) for detailed instructions.
+
+## Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `run_mcp_server.sh` | Start the MCP server |
+| `stop_mcp_server.sh` | Stop the running MCP server |
+| `test_redaction.py` | Test the redaction functionality |
+| `use_direct_redaction.sh` | Redact text and send to Claude |
+| `smithery_setup.sh` | Manage Smithery integration |
 
 ## Redaction Patterns
 
 The system includes default patterns for:
 
-- Social Security Numbers (SSN)
-- Credit Card Numbers
-- Email Addresses
-- Phone Numbers
-- API Keys and Credentials
-- IP Addresses
-- URLs (flagging)
+- Social Security Numbers (SSN): `\b\d{3}-\d{2}-\d{4}\b`
+- Credit Card Numbers: `\b(?:\d{4}[- ]?){3}\d{4}\b`
+- Email Addresses: `\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b`
+- Phone Numbers: `\b(?:\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b`
+- API Keys and Credentials: `(?i)(password|api[_-]?key|access[_-]?token|secret)[=:]\s*\S+`
+- IP Addresses: `\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`
 
 ## Cloud Deployment
 
@@ -69,32 +97,26 @@ The system includes default patterns for:
 
 For a managed, cloud-hosted solution:
 
-1. Run the preparation script:
+1. Run the Smithery setup script:
    ```bash
-   ./prepare_smithery_deployment.sh
+   ./smithery_setup.sh install YOUR_SMITHERY_API_KEY
    ```
 
-2. Upload the generated files to Smithery
-   - `smithery.json` - Configuration file
-   - `rules_engine_mcp.zip` - Deployment package
-
-3. Configure the Smithery integration:
+2. List installed servers:
    ```bash
-   ./use_smithery.sh configure
+   ./smithery_setup.sh list
    ```
 
-See [SMITHERY_DEPLOYMENT.md](SMITHERY_DEPLOYMENT.md) for detailed instructions.
+3. Test redaction through Smithery:
+   ```bash
+   ./smithery_setup.sh test "My SSN is 123-45-6789"
+   ```
 
-## Architecture
-
-The Rules Engine consists of these main components:
-
-1. **MCP Server**: Implements the Model Context Protocol
-2. **Rules Engine**: Processes text according to defined rules
-3. **Rule Management**: APIs for adding, updating, and managing rules
-4. **Transport Layers**: HTTP API + SSE (Server-Sent Events) for streaming
+See [SMITHERY_SETUP.md](SMITHERY_SETUP.md) for detailed instructions.
 
 ## API Endpoints
+
+The MCP server exposes these endpoints:
 
 - `/health` - Health check endpoint
 - `/redact_text` - Redacts text directly
@@ -102,6 +124,45 @@ The Rules Engine consists of these main components:
 - `/mcp` - MCP JSON-RPC endpoint
 - `/sse` - Server-Sent Events endpoint for MCP streaming
 - `/mcp-tools` - Tool information endpoint
+
+## Example: Direct API Redaction
+
+```python
+import requests
+
+def redact_text(text):
+    response = requests.post(
+        "http://localhost:6366/redact_text", 
+        json={"text": text}
+    )
+    return response.json()["redacted_text"]
+
+sensitive_text = "My SSN is 123-45-6789 and email is test@example.com"
+redacted_text = redact_text(sensitive_text)
+print(redacted_text)  # "My SSN is <SSN> and email is <EMAIL>"
+```
+
+## Adding Custom Rules
+
+You can add custom rules through the API or by modifying the rules configuration file:
+
+```python
+import requests
+
+new_rule = {
+    "name": "Custom Pattern",
+    "description": "My custom redaction pattern",
+    "condition": r"\bCUSTOM-\d{5}\b",  # Regex pattern
+    "action": "redact",
+    "replacement": "<CUSTOM>",
+    "priority": 50
+}
+
+response = requests.post(
+    "http://localhost:6366/add_rule", 
+    json=new_rule
+)
+```
 
 ## License
 
