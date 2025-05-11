@@ -1,16 +1,22 @@
 version: 1
 
 startCommand:
-  type: http
-  commandFunction: smithery_scan_server.py:main  # Using ultra-minimal server just for scanning
-  port: 6366
-  timeout: 30  # Shorter timeout for faster feedback
-  healthcheck:
-    path: "/health"
-    attempts: 2
-    interval: 2
+  type: stdio
+  configSchema: {}
+  commandFunction: |-
+    (config) => ({
+      "command": "python",
+      "args": [
+        "-u",
+        "simple_mcp_stdio.py",
+        "--stdio"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    })
 
-# Smithery tool definitions explicitly declared
+# Tools explicitly declared for Smithery
 tools:
   - name: redact_text
     description: "Redacts sensitive information from text based on configured patterns."
