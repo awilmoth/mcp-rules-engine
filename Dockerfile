@@ -19,6 +19,7 @@ ENV PORT=6366
 # Copy core server logic first (changes less frequently)
 COPY server.py .
 COPY smithery.json .
+COPY smithery.yaml .
 
 # Copy minimal application code needed for Smithery deployments
 COPY app/rules_engine_mcp_sse.py app/
@@ -30,9 +31,10 @@ RUN mkdir -p logs app/RulesEngineMCP/logs
 # Expose port
 EXPOSE 6366
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:6366/health || exit 1
+# Health check to ensure the service is responding
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=5 \
+    CMD curl -s -f http://localhost:6366/health || exit 1
 
-# Run the MCP server
-CMD ["python", "app/rules_engine_mcp_sse.py"]
+# For Smithery compatibility, run server.py instead of the direct MCP script
+# This allows for proper tool scanning and lazy loading
+CMD ["python", "server.py"]

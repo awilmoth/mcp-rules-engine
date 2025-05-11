@@ -91,7 +91,7 @@ async def get_tools():
     logger.info("Tools list requested at /mcp-tools")
     return {"tools": DEFAULT_TOOLS}
 
-@app.get("/mcp")
+@app.get("/mcp", response_model=None)
 @app.post("/mcp")
 async def mcp_endpoint(request: Request):
     """MCP endpoint that forwards to the actual MCP server."""

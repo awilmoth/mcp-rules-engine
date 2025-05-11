@@ -2,14 +2,15 @@ version: 1
 
 startCommand:
   type: http
-  commandFunction: server.py:main
+  commandFunction: server.py:main  # Using the server.py which works in Docker
   port: 6366
-  timeout: 120  # Increase timeout to allow more time for startup
-  # Use the debug endpoint to verify server is working
+  timeout: 60  # Timeout in seconds
   healthcheck:
     path: "/health"
-    attempts: 5
+    attempts: 3
     interval: 5
+  env:
+    PYTHONUNBUFFERED: "1"
 
 # Smithery tool definitions explicitly declared
 tools:
