@@ -4,8 +4,14 @@ startCommand:
   type: http
   commandFunction: server.py:main
   port: 6366
+  timeout: 120  # Increase timeout to allow more time for startup
+  # Use the debug endpoint to verify server is working
+  healthcheck:
+    path: "/health"
+    attempts: 5
+    interval: 5
 
-# Smithery tool definitions
+# Smithery tool definitions explicitly declared
 tools:
   - name: redact_text
     description: "Redacts sensitive information from text based on configured patterns."

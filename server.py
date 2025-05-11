@@ -50,9 +50,10 @@ DEFAULT_TOOLS = [
 ]
 
 @app.get("/health")
+@app.head("/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "ok", "version": "1.0.0"}
+    """Health check endpoint that supports HEAD and GET requests."""
+    return {"status": "ok", "version": "1.0.0", "tools_available": True}
 
 @app.get("/")
 async def root():
@@ -61,7 +62,27 @@ async def root():
         "name": "MCP Rules Engine",
         "version": "1.0.0",
         "status": "active",
-        "endpoints": ["/redact_text", "/process_text", "/mcp", "/health"]
+        "endpoints": ["/redact_text", "/process_text", "/mcp", "/health", "/debug"]
+    }
+
+@app.get("/debug")
+async def debug_info():
+    """Debug endpoint for Smithery."""
+    import platform
+    import sys
+    import os
+
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "python": sys.version,
+        "platform": platform.platform(),
+        "environment": {
+            key: value for key, value in os.environ.items()
+            if "key" not in key.lower() and "secret" not in key.lower() and "token" not in key.lower()
+        },
+        "tools": DEFAULT_TOOLS,
+        "note": "This server implements MCP protocol with JSON-RPC over HTTP and supports tool discovery without authentication."
     }
 
 @app.get("/mcp-tools")
