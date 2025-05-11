@@ -1,14 +1,20 @@
+version: 1
 name: mcp-rules-engine
 description: "MCP Rules Engine for regex-based redaction of sensitive information"
-version: "1.0.0"
-author: "Aaron Wilmoth"
 
+# Start command configuration
+start:
+  command: ["python", "app/rules_engine_mcp_sse.py"]
+  port: 6366
+
+# MCP configuration
 transport: http
 service:
   endpoint: "/mcp"
   health_endpoint: "/health"
   tools_endpoint: "/mcp-tools"
 
+# Tools definitions
 tools:
   - name: redact_text
     description: "Redacts sensitive information from text based on configured patterns."
@@ -29,19 +35,10 @@ tools:
         items:
           type: string
 
-build:
-  dockerfile: Dockerfile
-  port: 6366
-
-startCommand: ["python", "app/rules_engine_mcp_sse.py"]
-
-deploy:
-  memory: 512Mi
-  cpu: 0.5
-
-config_schema:
+# Configuration schema
+configSchema:
   type: object
   properties:
-    default_ruleset:
+    defaultRuleSet:
       type: string
       description: "Default ruleset to use"
