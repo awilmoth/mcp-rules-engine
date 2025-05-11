@@ -1,12 +1,20 @@
 version: 1
 
 startCommand:
-  type: http
-  port: 6366
-  healthcheck:
-    path: "/health"
-    attempts: 2
-    interval: 2
+  type: stdio
+  configSchema: {}
+  commandFunction: |-
+    (config) => ({
+      "command": "python",
+      "args": [
+        "-u",
+        "stdio_server.py"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "MCP_STDIO_TRANSPORT": "true"
+      }
+    })
 
 tools:
   - name: redact_text
