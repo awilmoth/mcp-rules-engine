@@ -19,19 +19,25 @@ postScanCommand:
 tools:
   - name: redact_text
     description: "Redacts sensitive information from text based on configured patterns."
-    parameters:
-      text:
-        type: string
-        description: "The text to redact"
+    inputSchema:
+      type: object
+      properties:
+        text:
+          type: string
+          description: "The text to redact"
+      required: ["text"]
 
   - name: process_text
     description: "Processes text through rules engine with options for rule sets."
-    parameters:
-      text:
-        type: string
-        description: "The text to process"
-      rule_sets:
-        type: array
-        description: "Optional IDs of rule sets to apply"
-        items:
+    inputSchema:
+      type: object
+      properties:
+        text:
           type: string
+          description: "The text to process"
+        rule_sets:
+          type: array
+          description: "Optional IDs of rule sets to apply"
+          items:
+            type: string
+      required: ["text"]
