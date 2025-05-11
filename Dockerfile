@@ -17,8 +17,8 @@ ENV PORT=6366
 ENV HOST=0.0.0.0
 
 # Copy application files
-COPY smithery_deployment/smithery_scan_server.py .
-COPY smithery_deployment/simple_mcp_server.py .
+COPY smithery_scan_server.py .
+COPY simple_mcp_server.py .
 COPY smithery_deployment/rules_engine_mcp_sse.py .
 COPY rules_config.json ./RulesEngineMCP/
 
