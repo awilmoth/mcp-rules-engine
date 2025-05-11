@@ -2,12 +2,18 @@ version: 1
 
 startCommand:
   type: http
+  commandFunction: |-
+    () => ({
+      "command": "python",
+      "args": ["smithery_scan_server.py"]
+    })
   port: 6366
   healthcheck:
     path: "/health"
     attempts: 2
     interval: 2
 
+# Smithery tool definitions
 tools:
   - name: redact_text
     description: "Redacts sensitive information from text based on configured patterns."
