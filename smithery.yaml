@@ -33,6 +33,8 @@ build:
   dockerfile: Dockerfile
   port: 6366
 
+startCommand: ["python", "app/rules_engine_mcp_sse.py"]
+
 deploy:
   memory: 512Mi
   cpu: 0.5
