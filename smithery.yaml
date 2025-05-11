@@ -5,6 +5,7 @@ startCommand:
   commandFunction: server.py:main
   port: 6366
 
+# Smithery tool definitions
 tools:
   - name: redact_text
     description: "Redacts sensitive information from text based on configured patterns."
